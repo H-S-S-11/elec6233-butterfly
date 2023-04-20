@@ -4,6 +4,9 @@ module butterfly_datapath_tb ();
 reg clk, reset, load_coeff, load_b, load_mult, multiply;
 reg load_output_reg, subtract, mult_out_select, fbr_input;
 
+wire fsm_load_coeff, fsm_load_b, fsm_load_mult, fsm_multiply;
+wire fsm_load_output_reg, fsm_subtract, fsm_mult_out_select, fsm_fbr_input;
+
 reg ready_in;
 
 reg  [7:0] data_in;
@@ -117,7 +120,7 @@ initial begin
   load_output_reg = 1'b0;
   fbr_input       = 1'b0;
 
-  #50;
+  #90;
   // Disp Im y = Im(a) + Im(mout) = 25.5
   load_output_reg = 1'b1;
   mult_out_select = 1'b1;
@@ -125,7 +128,7 @@ initial begin
   load_output_reg = 1'b0;
   mult_out_select = 1'b0;
 
-  #50;
+  #90;
   // Disp Re z = Re(a) - Re(mout) = 0.5
   load_output_reg = 1'b1;
   mult_out_select = 1'b0;
@@ -135,7 +138,7 @@ initial begin
   mult_out_select = 1'b0;
   subtract        = 1'b0;
 
-  #50;
+  #90;
   // Disp Im z = Im(a) - Im(mout) = -1.5
   load_output_reg = 1'b1;
   mult_out_select = 1'b1;
@@ -146,24 +149,36 @@ initial begin
   subtract        = 1'b0;
 
 
-  #1000;
+  #500;
   $finish();
 
 end
 
-
 butterfly_datapath dut(
   .clk(clk), .reset(reset),
-  .load_coeff(load_coeff),            // loads re(w) pipeline reg and coeff regs
-  .load_b(load_b),                    // loads b pipeline regs
-  .load_mult(load_mult),              // Loads DSP input mult regs and swaps b
-  .multiply(multiply),                // Enables DSP output reg and Re(mout) reg   
-  .load_output_reg(load_output_reg),  // Enables LED output and feedback registers
-  .subtract(subtract),                // Controls the two add/sub blocks
-  .mult_out_select(mult_out_select),  // Mux select for LED and feedback regs from multiplier output (opposite polarities)
-  .fbr_input(fbr_input),              // Makes output feedback reg load the data input
-  .data_in(data_in),
-  .data_out(data_out)
+  .load_coeff     (fsm_load_coeff),            // loads re(w) pipeline reg and coeff regs
+  .load_b         (fsm_load_b),                    // loads b pipeline regs
+  .load_mult      (fsm_load_mult),              // Loads DSP input mult regs and swaps b
+  .multiply       (fsm_multiply),                // Enables DSP output reg and Re(mout) reg   
+  .load_output_reg(fsm_load_output_reg),  // Enables LED output and feedback registers
+  .subtract       (fsm_subtract),                // Controls the two add/sub blocks
+  .mult_out_select(fsm_mult_out_select),  // Mux select for LED and feedback regs from multiplier output (opposite polarities)
+  .fbr_input      (fsm_fbr_input),              // Makes output feedback reg load the data input
+  .data_in        (data_in),
+  .data_out       (data_out)
+);
+
+butterfly_controller control_dut(
+  .clk(clk), .reset(reset),
+  .ReadyIn        (ready_in),
+  .load_coeff     (fsm_load_coeff),     
+  .load_b         (fsm_load_b),         
+  .load_mult      (fsm_load_mult),      
+  .multiply       (fsm_multiply),       
+  .load_output_reg(fsm_load_output_reg),
+  .subtract       (fsm_subtract),       
+  .mult_out_select(fsm_mult_out_select),
+  .fbr_input      (fsm_fbr_input)
 );
   
 // Dump waveforms

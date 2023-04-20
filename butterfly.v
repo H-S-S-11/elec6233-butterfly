@@ -35,6 +35,144 @@ butterfly_datapath datapath(
   
 endmodule
 
+module butterfly_controller(
+  input wire clk, reset, ReadyIn,
+  output reg load_coeff, load_b, load_mult,
+  output reg multiply, load_output_reg, subtract,
+  output reg mult_out_select, fbr_input
+);
+
+typedef enum reg [3:0] {
+  s_reset,
+  s_read_re_w, s_read_im_w,
+  s_read_re_b, s_read_im_b, s_load_mult,
+  s_read_re_a, s_mult2, s_read_im_a,
+  s_disp_im_y, s_disp_re_z, s_disp_im_z} state_t;
+state_t state;
+
+reg last_ReadyIn;
+wire ReadyIn_rise, ReadyIn_fall;
+assign ReadyIn_rise = (~last_ReadyIn) &   ReadyIn ;
+assign ReadyIn_fall =   last_ReadyIn  & (~ReadyIn);
+
+always @(posedge clk) begin
+  if(reset) begin
+    state <= s_read_re_w;
+    last_ReadyIn <= 1'b0;
+
+    load_coeff      <= 1'b0;
+    load_b          <= 1'b0;
+    load_mult       <= 1'b0;
+    load_output_reg <= 1'b0;
+    multiply        <= 1'b0;
+    subtract        <= 1'b0;
+    mult_out_select <= 1'b0;
+    fbr_input       <= 1'b0;
+  end else  begin
+    last_ReadyIn <= ReadyIn;
+    // Register enables must pulse
+    load_coeff      <= 1'b0;
+    load_b          <= 1'b0;
+    load_mult       <= 1'b0;
+    load_output_reg <= 1'b0;
+    multiply        <= 1'b0;
+
+    case (state)
+      s_reset: begin
+        if (ReadyIn_rise) state <= s_read_re_w;
+      end
+      s_read_re_w: begin
+        if (ReadyIn_rise) begin
+          state <= s_read_im_w;
+          load_coeff <= 1'b1;
+        end
+      end
+      s_read_im_w: begin
+        if (ReadyIn_rise) begin
+          state <= s_read_re_b;
+          load_coeff <= 1'b1;
+        end
+      end
+      s_read_re_b: begin
+        if (ReadyIn_rise) begin
+          state <= s_read_im_b;
+          load_b <= 1'b1;
+        end
+      end
+      s_read_im_b: begin
+        if (ReadyIn_rise) begin
+          state <= s_load_mult;
+          load_b <= 1'b1;
+        end
+      end
+      s_load_mult: begin
+        if (ReadyIn_fall) begin
+          state <= s_read_re_a;
+          load_b <= 1'b1;
+          load_mult <= 1'b1;
+        end
+      end
+      s_read_re_a: begin
+        if (ReadyIn_rise) begin
+          state <= s_mult2;
+          fbr_input <= 1'b1;
+          load_mult <= 1'b1;
+          load_output_reg <= 1'b1;
+          multiply <= 1'b1;
+          subtract <= 1'b1;
+        end
+      end
+      s_mult2: begin
+        if (ReadyIn_fall) begin
+          state <= s_read_im_a;
+          multiply <= 1'b1;
+          subtract <= 1'b0;
+        end
+      end
+      s_read_im_a: begin
+        if (ReadyIn_rise) begin
+          state <= s_disp_im_y;
+          fbr_input <= 1'b1;
+          load_output_reg <= 1'b1;
+          subtract <= 1'b0;
+        end
+      end
+      s_disp_im_y: begin
+        if (ReadyIn_rise) begin
+          state <= s_disp_re_z;
+          fbr_input <= 1'b0;
+          load_output_reg <= 1'b1;
+          mult_out_select <= 1'b1;
+          subtract <= 1'b0;
+        end
+      end
+      s_disp_re_z: begin
+        if (ReadyIn_rise) begin
+          state <= s_disp_im_z;
+          fbr_input <= 1'b0;
+          load_output_reg <= 1'b1;
+          mult_out_select <= 1'b0;
+          subtract <= 1'b1;
+        end
+      end
+      s_disp_im_z: begin
+        if (ReadyIn_rise) begin
+          state <= s_read_re_b;
+          fbr_input <= 1'b0;
+          load_output_reg <= 1'b1;
+          mult_out_select <= 1'b1;
+          subtract <= 1'b1;
+        end
+      end
+      default: begin
+        state <= s_reset;       
+      end
+  endcase
+  end
+end
+  
+endmodule
+
 
 module butterfly_datapath(
   input   wire        clk, reset,
