@@ -1,0 +1,4 @@
+db/
+*.vvp
+*.vcd
+output_files/

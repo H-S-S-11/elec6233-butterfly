@@ -1,4 +1,10 @@
-
+module butterfly(
+  input wire CLOCK_50,
+  input wire [9:0] SW,
+  output wire [7:0] LED
+);
+  
+endmodule
 
 
 module butterfly_datapath(
