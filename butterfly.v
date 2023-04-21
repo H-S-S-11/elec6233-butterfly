@@ -4,16 +4,18 @@ module butterfly(
   input wire CLOCK_50,
   input wire SW_nResetSync,
   input wire SW_ReadyIn,
-  input wire [8:0] SW,
+  input wire [7:0] SW,
   output wire [7:0] LEDR
 );
 
 reg reset, mid_sync_reset;
+reg [1:0] SW_ReadyIn_sync;
 // SW[9] is an active low reset, datapath has active high
-// Sync the reset
+// Sync the reset and the ReadyIn signal
 always @(posedge CLOCK_50) begin
   mid_sync_reset <= ! SW_nResetSync;
   reset <= mid_sync_reset;
+  SW_ReadyIn_sync <= {SW_ReadyIn, SW_ReadyIn_sync[1]};
 end
 
 
@@ -23,25 +25,27 @@ wire multiply, subtract, mult_out_select, fbr_input;
 
 // SW_ReadyIn can bounce. In order to debounce, require the switch input is high for
 // 10ms (~500k cycles @ 50MHz) before toggling the signal to the module
-reg [20:0] debounce_count;
+reg [19:0] debounce_count;
 wire ready_in;
+assign ready_in = debounce_count[19];
+
 always @(posedge CLOCK_50) begin
     if (reset) begin
-      debounce_count <= 21'd0;
+      debounce_count <= '0;
     end else begin
-      if (SW_ReadyIn ) begin
-        if (!debounce_count[20]) debounce_count <= debounce_count + 1;
+      if (SW_ReadyIn_sync[0] ) begin
+        if (!ready_in) debounce_count <= debounce_count + 20'd1;
         // Speed up debouncing by a factor of 1000 in simulation
         `ifdef COCOTB_SIM_WAVEFORMS
-        if (!debounce_count[20]) debounce_count <= debounce_count + 1024;
+        if (!ready_in) debounce_count <= debounce_count + 1024;
         `endif
       end else begin
-        debounce_count <= 21'd0;
+        debounce_count <= '0;
       end
     end
 end
 
-assign ready_in = debounce_count[20];
+
 
 
 butterfly_datapath datapath(
@@ -219,7 +223,6 @@ end
   
 endmodule
 
-
 module butterfly_datapath(
   input   wire        clk, reset,
   input   wire        load_coeff,      // loads re(w) pipeline reg and coeff regs
@@ -284,8 +287,8 @@ assign fbr_sub_in = mult_out_select ? re_mult_out : mult_out;
 assign led_add_in = mult_out_select ? mult_out : re_mult_out;
 always @(posedge clk) begin
   if (reset) begin
-    led <= 9'd0;
-    feedback <= 9'd0;
+    led <= '0;
+    feedback <= '0;
   end else begin
     if (load_output_reg) begin
       feedback  <= fbr_input ? {data_in, 1'b0} : led - fbr_sub_in;
