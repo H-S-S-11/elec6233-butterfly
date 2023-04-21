@@ -1,3 +1,5 @@
+`default_nettype none
+
 module butterfly(
   input wire CLOCK_50,
   input wire [9:0] SW,
@@ -12,11 +14,8 @@ assign reset = ! SW[9];
 wire load_output_reg, load_coeff, load_b, load_mult;
 wire multiply, subtract, mult_out_select, fbr_input;
 
-assign load_output_reg = 1'b1;
-assign multiply = 1'b1;
-assign load_mult = 1'b1;
-assign load_b = 1'b1;
-assign fbr_input = 1'b1;
+reg ready_in;
+assign ready_in = SW[8];
 
 
 butterfly_datapath datapath(
@@ -31,6 +30,19 @@ butterfly_datapath datapath(
   .fbr_input(fbr_input),              // Makes output feedback reg load the data input
   .data_in(SW[7:0]),    // Leftmost switches are MSB
   .data_out(LEDR[7:0])   // Leftmost LEDS are MSB
+);
+
+butterfly_controller control_dut(
+  .clk(CLOCK_50), .reset(reset),
+  .ReadyIn        (ready_in),
+  .load_coeff     (load_coeff),     
+  .load_b         (load_b),         
+  .load_mult      (load_mult),      
+  .multiply       (multiply),       
+  .load_output_reg(load_output_reg),
+  .subtract       (subtract),       
+  .mult_out_select(mult_out_select),
+  .fbr_input      (fbr_input)
 );
   
 endmodule
@@ -268,3 +280,5 @@ mult_add multiplier(
 );
 
 endmodule
+
+`default_nettype wire

@@ -1,0 +1,18 @@
+	component mult_add is
+		port (
+			result   : out std_logic_vector(32 downto 0);                    -- result
+			dataa_0  : in  std_logic_vector(15 downto 0) := (others => 'X'); -- dataa_0
+			dataa_1  : in  std_logic_vector(15 downto 0) := (others => 'X'); -- dataa_1
+			datab_0  : in  std_logic_vector(15 downto 0) := (others => 'X'); -- datab_0
+			datab_1  : in  std_logic_vector(15 downto 0) := (others => 'X'); -- datab_1
+			addnsub1 : in  std_logic                     := 'X';             -- addnsub1
+			clock0   : in  std_logic                     := 'X';             -- clock0
+			clock1   : in  std_logic                     := 'X';             -- clock1
+			clock2   : in  std_logic                     := 'X';             -- clock2
+			ena0     : in  std_logic                     := 'X';             -- ena0
+			ena1     : in  std_logic                     := 'X';             -- ena1
+			ena2     : in  std_logic                     := 'X';             -- ena2
+			sclr0    : in  std_logic                     := 'X'              -- sclr0
+		);
+	end component mult_add;
+

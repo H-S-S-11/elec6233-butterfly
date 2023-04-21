@@ -1,7 +1,9 @@
 db/
 output_files/
 incremental_db/
+mult_add_aclr/
 *.qws
 *.vvp
 *.vcd
+*log.txt
 
