@@ -2,20 +2,46 @@
 
 module butterfly(
   input wire CLOCK_50,
-  input wire [9:0] SW,
+  input wire SW_nResetSync,
+  input wire SW_ReadyIn,
+  input wire [8:0] SW,
   output wire [7:0] LEDR
 );
 
-wire reset;
+reg reset, mid_sync_reset;
 // SW[9] is an active low reset, datapath has active high
-assign reset = ! SW[9];
+// Sync the reset
+always @(posedge CLOCK_50) begin
+  mid_sync_reset <= ! SW_nResetSync;
+  reset <= mid_sync_reset;
+end
+
 
 // Control signals to datapath
 wire load_output_reg, load_coeff, load_b, load_mult;
 wire multiply, subtract, mult_out_select, fbr_input;
 
-reg ready_in;
-assign ready_in = SW[8];
+// SW_ReadyIn can bounce. In order to debounce, require the switch input is high for
+// 10ms (~500k cycles @ 50MHz) before toggling the signal to the module
+reg [20:0] debounce_count;
+wire ready_in;
+always @(posedge CLOCK_50) begin
+    if (reset) begin
+      debounce_count <= 21'd0;
+    end else begin
+      if (SW_ReadyIn ) begin
+        if (!debounce_count[20]) debounce_count <= debounce_count + 1;
+        // Speed up debouncing by a factor of 1000 in simulation
+        `ifdef COCOTB_SIM_WAVEFORMS
+        if (!debounce_count[20]) debounce_count <= debounce_count + 1024;
+        `endif
+      end else begin
+        debounce_count <= 21'd0;
+      end
+    end
+end
+
+assign ready_in = debounce_count[20];
 
 
 butterfly_datapath datapath(
@@ -28,8 +54,8 @@ butterfly_datapath datapath(
   .subtract(subtract),                // Controls the two add/sub blocks
   .mult_out_select(mult_out_select),  // Mux select for LED and feedback regs from multiplier output (opposite polarities)
   .fbr_input(fbr_input),              // Makes output feedback reg load the data input
-  .data_in(SW[7:0]),    // Leftmost switches are MSB
-  .data_out(LEDR[7:0])   // Leftmost LEDS are MSB
+  .data_in(SW[7:0]),                  // Leftmost switches are MSB
+  .data_out(LEDR[7:0])                // Leftmost LEDS are MSB
 );
 
 butterfly_controller control_dut(
@@ -44,6 +70,14 @@ butterfly_controller control_dut(
   .mult_out_select(mult_out_select),
   .fbr_input      (fbr_input)
 );
+
+// For simulating with CocoTB
+`ifdef COCOTB_SIM_WAVEFORMS
+initial begin
+    $dumpfile("butterfly.vcd");
+    $dumpvars(0, butterfly);
+end
+`endif
   
 endmodule
 
@@ -263,6 +297,13 @@ always @(posedge clk) begin
     end
   end
 end
+
+
+// Logiclock needed for this to implement in one region properly
+// https://community.intel.com/t5/Programmable-Devices/Inferring-two-multipliers-in-one-DPS-block-in-verilog-VHDL/m-p/158809
+// https://www.intel.com/content/www/us/en/support/programmable/articles/000084312.html 
+// https://www.intel.com/content/www/us/en/docs/programmable/683082/23-1/inferring-multiply-accumulator-and-multiply.html
+// https://community.intel.com/t5/Intel-Quartus-Prime-Software/Specific-to-Logic-lock-chip-planner/td-p/710447
 
 // Result = dataa_0*datab_0 +/- dataa_1*datab_1
 mult_add multiplier(

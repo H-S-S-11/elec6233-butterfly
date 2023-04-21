@@ -862,8 +862,8 @@ set_instance_assignment -name PACKAGE_SKEW_COMPENSATION OFF -to HPS_DDR3_CK_N
 
 # Switches
 
-set_location_assignment PIN_AE12 -to SW[9]
-set_location_assignment PIN_AD10 -to SW[8]
+set_location_assignment PIN_AE12 -to SW_nResetSync
+set_location_assignment PIN_AD10 -to SW_ReadyIn
 set_location_assignment PIN_AC9 -to SW[7]
 set_location_assignment PIN_AE11 -to SW[6]
 set_location_assignment PIN_AD12 -to SW[5]
@@ -872,8 +872,8 @@ set_location_assignment PIN_AF10 -to SW[3]
 set_location_assignment PIN_AF9 -to SW[2]
 set_location_assignment PIN_AC12 -to SW[1]
 set_location_assignment PIN_AB12 -to SW[0]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to SW[9]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to SW[8]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to SW_nResetSync
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to SW_ReadyIn
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to SW[7]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to SW[6]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to SW[5]
@@ -924,4 +924,8 @@ set_global_assignment -name VERILOG_MACRO "SYNTHESIS=<None>"
 # Area optimisation settings
 set_global_assignment -name OPTIMIZATION_MODE "AGGRESSIVE AREA"
 set_global_assignment -name MAX_BALANCING_DSP_BLOCKS 1
-#set_global_assignment -name QII_AUTO_PACKED_REGISTERS OFF
+
+# set_global_assignment -name QII_AUTO_PACKED_REGISTERS OFF
+# set_instance_assignment -name MAX_BALANCING_DSP_BLOCKS 1 -to "butterfly_datapath:datapath"
+# set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

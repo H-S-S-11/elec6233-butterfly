@@ -346,8 +346,6 @@ module  mult_add_0002  (
 endmodule
 
 
-`ifndef SYNTHESIS
-
 //--------------------------------------------------------------------------
 // Module Name     : altera_mult_add
 //
@@ -1449,5 +1447,3 @@ multiply_adder (
 
 	
 endmodule
-
-`endif

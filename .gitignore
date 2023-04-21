@@ -2,8 +2,9 @@ db/
 output_files/
 incremental_db/
 mult_add_aclr/
+sim_build/
 *.qws
 *.vvp
 *.vcd
 *log.txt
-
+results.xml
