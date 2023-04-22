@@ -126,6 +126,9 @@ always @(posedge clk) begin
     load_mult       <= 1'b0;
     load_output_reg <= 1'b0;
     multiply        <= 1'b0;
+    subtract        <= 1'b0;
+    mult_out_select <= 1'b0;
+    fbr_input       <= 1'b0;
 
     case (state)
       s_reset: begin
