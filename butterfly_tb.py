@@ -67,6 +67,7 @@ async def butterfly_mult(dut, re_w, im_w, re_b, im_b, re_a, im_a):
     await Timer(20, units="ms")
     yz[result] = dut.LEDR.value.signed_integer
   dut._log.info(f"Result: {yz}")
+  
   expected_results = {
     'Re(y)' : math.floor( re_a + (re_b*re_w - im_b*im_w) ),
     'Im(y)' : math.floor( im_a + (im_b*re_w + re_b*im_w) ),
@@ -74,10 +75,23 @@ async def butterfly_mult(dut, re_w, im_w, re_b, im_b, re_a, im_a):
     'Im(z)' : math.floor( im_a - (im_b*re_w + re_b*im_w) ),
   }
   dut._log.info(f"Expected Result: {expected_results}")
-  assert (yz==expected_results), f"Results {yz} differ from expected {expected_results}" #f"Expected {result}={expected_results[result]} but got {yz[result]}")
-
   await bouncy_switch(dut.SW_ReadyIn, 0)
   await Timer(10, units="ms")
+
+  # Check if any of the expected results are outside 8-bt signed range
+  for calc, expected in expected_results.items():
+    if (expected > 127) or (expected < -128):
+      dut._log.warning(f"Expected value of {calc} ({expected}) is not a valid 8-bit signed integer, ignoring this calculation")
+      return
+  # Otherwise check results are equal
+  assert (yz==expected_results), f"Results {yz} differ from expected {expected_results}" #f"Expected {result}={expected_results[result]} but got {yz[result]}")
+
+async def random_butterfly_mult(dut, re_w, im_w):
+  re_a = random.randint(-128, 127)
+  im_a = random.randint(-128, 127)
+  re_b = random.randint(-128, 127)
+  im_b = random.randint(-128, 127)
+  await butterfly_mult(dut, re_w, im_w, re_b, im_b, re_a, im_a)
 
 @cocotb.test()
 async def butterfly_test(dut):
@@ -91,8 +105,27 @@ async def butterfly_test(dut):
 
   await load_coefficients(dut, 0.75, -0.25)
   await butterfly_mult(dut, 0.75, -0.25, 6, 20, 10, 12)
+  
+  # Try with some larger numbers
+  await butterfly_mult(dut, 0.75, -0.25, 100, -80, 75, 120)
 
+  # This case (generated from constrained random stimuli) made it fail when I had the complicated feedback reg
+  await load_coefficients(dut, 0.031250, 0.718750)
+  await butterfly_mult(dut, 0.031250, 0.718750, -96, -103, 31, 18)
 
+  # Define in the makefile how many times these loops run
+  n_coefficients = int(os.getenv("N_COEFFICIENT_PAIRS", 1))
+  n_butterflies  = int(os.getenv("N_BUTTERFLIES", 1))
+
+  for n_coeff in range(0, n_coefficients):
+    re_w = random.randint(-128, 127) / (2**7)
+    im_w = random.randint(-128, 127) / (2**7)
+    await load_coefficients(dut, re_w, im_w)
+    for n_butterfly in range(0, n_butterflies):
+      await random_butterfly_mult(dut, re_w, im_w)
+      
+
+  await Timer(20, units="ms")
 
   
 
