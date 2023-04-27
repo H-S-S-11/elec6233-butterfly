@@ -5,6 +5,7 @@ SIM ?= icarus
 TOPLEVEL_LANG ?= verilog
 
 VERILOG_SOURCES += butterfly.v
+VERILOG_SOURCES += hex_decoder.v
 VERILOG_SOURCES += quartus_ip/mult_add.v
 VERILOG_SOURCES += quartus_ip/mult_add/mult_add_0002.v
 VERILOG_SOURCES += C:/intelFPGA_lite/20.1/quartus/libraries/megafunctions/altera_mult_add_rtl.v

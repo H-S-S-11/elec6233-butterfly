@@ -912,6 +912,7 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LEDR[0]
 
 # Source files
 set_global_assignment -name SYSTEMVERILOG_FILE butterfly.v
+set_global_assignment -name SYSTEMVERILOG_FILE hex_decoder.v
 set_global_assignment -name QIP_FILE quartus_ip/mult_add.qip
 
 set_global_assignment -name SDC_FILE butterfly.sdc

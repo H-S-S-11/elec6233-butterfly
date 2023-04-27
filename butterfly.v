@@ -5,7 +5,8 @@ module butterfly(
   input wire SW_nResetSync,
   input wire SW_ReadyIn,
   input wire [7:0] SW,
-  output wire [7:0] LEDR
+  output wire [7:0] LEDR,
+  output wire [6:0] HEX5, HEX4, HEX1, HEX0
 );
 
 reg reset, mid_sync_reset;
@@ -46,8 +47,6 @@ always @(posedge CLOCK_50) begin
 end
 
 
-
-
 butterfly_datapath datapath(
   .clk(CLOCK_50), .reset(reset),
   .load_coeff(load_coeff),            // loads re(w) pipeline reg and coeff regs
@@ -73,6 +72,27 @@ butterfly_controller control_dut(
   .subtract       (subtract),       
   .mult_out_select(mult_out_select),
   .fbr_input      (fbr_input)
+);
+
+// Hex decoders to make entry and result checking easier
+hex_decoder hex0(
+  .value(SW[3:0]),
+  .segments(HEX0)
+);
+
+hex_decoder hex1(
+  .value(SW[7:4]),
+  .segments(HEX1)
+);
+
+hex_decoder hex4(
+  .value(LEDR[3:0]),
+  .segments(HEX4)
+);
+
+hex_decoder hex5(
+  .value(LEDR[7:4]),
+  .segments(HEX5)
 );
 
 // For simulating with CocoTB
