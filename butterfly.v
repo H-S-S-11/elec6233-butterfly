@@ -375,7 +375,7 @@ module mult_add_inferred(
 // Input registers
 reg [15:0] dataa_0_reg, dataa_1_reg, datab_0_reg, datab_1_reg;
 always @(posedge clock0, posedge aclr0) begin
-  if (aclr2) begin
+  if (aclr0) begin
     dataa_0_reg <= 16'd0;
     dataa_1_reg <= 16'd0;
     datab_0_reg <= 16'd0;
