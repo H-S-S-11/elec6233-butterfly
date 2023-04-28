@@ -423,8 +423,16 @@ endmodule
 module macc_addsub_reg(
   output reg [32:0] result,
   input signed [15:0] a0, a1, b0, b1,
-  input wire addnsub1, clock2, aclr1, ena2
+  input addnsub1, clock2, aclr1, ena2
 );
+
+// https://community.intel.com/t5/FPGA-Intellectual-Property/Dynamic-addition-submission-in-Stratix-V-DSP-block/m-p/119080
+// signed keyword is the key
+wire signed [31:0] p0, p1;
+wire signed [32:0] p01;
+assign p0 = a0*b0;
+assign p1 = a1*b1;
+assign p01 = p0 + p1;
 
 // Multipliers and output reg
 always @(posedge clock2, posedge aclr1) begin
@@ -432,7 +440,7 @@ always @(posedge clock2, posedge aclr1) begin
     result <= 33'd0;
   end else begin
     if (ena2) begin
-      result <= a0*b0 + a1*b1;
+      result <= p01;
     end
   end
 end
