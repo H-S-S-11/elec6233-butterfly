@@ -21,14 +21,16 @@ MODULE = butterfly_tb
 export COCOTB_LOG_LEVEL=INFO
 
 # Use COMPILE_ARGS to send module parameters or defines to vvp
+COMPILE_ARGS=-DCOCOTB_FAST_DEBOUNCE
 # Eg uncomment this to dump waveforms
-#COMPILE_ARGS=-DCOCOTB_SIM_WAVEFORMS
+COMPILE_ARGS+=-DCOCOTB_SIM_WAVEFORMS
+
 
 # These numbers control how many iterations of constrained random sim occur
 # i.e you get (N_COEFFICIENT_PAIRS * N_BUTTERFLIES) butterfly multiplications
 # If this number is large, it is recommended not to dump waveforms!
-export N_COEFFICIENT_PAIRS = 10
-export N_BUTTERFLIES = 10
+export N_COEFFICIENT_PAIRS = 1
+export N_BUTTERFLIES = 1
 
 # Constrain the random inputs to only those that will produce results within the range of 8-bit signed ints
 export VALID_INPUTS_ONLY = 1

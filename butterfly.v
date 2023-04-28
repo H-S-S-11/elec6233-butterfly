@@ -37,7 +37,7 @@ always @(posedge CLOCK_50) begin
       if (SW_ReadyIn_sync[0] ) begin
         if (!ready_in) debounce_count <= debounce_count + 20'd1;
         // Speed up debouncing by a factor of 1000 in simulation
-        `ifdef COCOTB_SIM_WAVEFORMS
+        `ifdef COCOTB_FAST_DEBOUNCE
         if (!ready_in) debounce_count <= debounce_count + 1024;
         `endif
       end else begin
@@ -332,7 +332,8 @@ end
 // https://community.intel.com/t5/Intel-Quartus-Prime-Software/Specific-to-Logic-lock-chip-planner/td-p/710447
 
 // Result = dataa_0*datab_0 +/- dataa_1*datab_1
-/* Quartus IP multiplier block
+// Quartus IP
+`ifdef USE_QUARTUS_IP_MULTIPLIER
 mult_add multiplier(
   .result(result),          //  result.result
   .dataa_0({ {8{re_w_pipeline[7] }}, re_w_pipeline}),  // Re(w) reg -sign extended to 16 bits (chipverify.com)
@@ -346,9 +347,10 @@ mult_add multiplier(
   .sclr0(reset),        // Sync active high reset
   .clock0(clk), .clock1(clk), .clock2(clk) // common clk
 );
-*/
+`endif
 
 // Result = dataa_0*datab_0 +/- dataa_1*datab_1
+`ifndef USE_QUARTUS_IP_MULTIPLIER
 mult_add_inferred multiplier(
   .result(result),          //  result.result
   .dataa_0({ {8{re_w_pipeline[7] }}, re_w_pipeline}),  // Re(w) reg -sign extended to 16 bits (chipverify.com)
@@ -362,6 +364,7 @@ mult_add_inferred multiplier(
   .aclr0(reset), .aclr1(reset),  // Async active high reset
   .clock0(clk), .clock1(clk), .clock2(clk)      // common clk
 );
+`endif
 
 endmodule
 
@@ -369,7 +372,7 @@ endmodule
 // https://www.intel.com/content/www/us/en/docs/programmable/683082/22-1/inferring-multiply-accumulator-and-multiply.html 
 module mult_add_inferred(
   output reg [32:0] result,
-  input wire [15:0] dataa_0, dataa_1, datab_0, datab_1,
+  input signed [15:0] dataa_0, dataa_1, datab_0, datab_1,
   input wire clock0, clock1, clock2,
   input wire ena0, ena1, ena2,
   input wire aclr0, aclr1, addnsub1
@@ -381,28 +384,35 @@ always @(posedge clock0, posedge aclr0) begin
   if (aclr0) begin
     dataa_0_reg <= 16'd0;
     dataa_1_reg <= 16'd0;
-    datab_0_reg <= 16'd0;
-    datab_1_reg <= 16'd0;
   end else begin
     if (ena0) begin
       dataa_0_reg <= dataa_0;
-      dataa_1_reg <= dataa_1;
+      dataa_1_reg <= dataa_1;   
+    end
+  end
+end
+
+always @(posedge clock0, posedge aclr0) begin
+  if (aclr0) begin
+    datab_0_reg <= 16'd0;
+    datab_1_reg <= 16'd0;
+  end else begin
+    if (ena1) begin
       datab_0_reg <= datab_0;
       datab_1_reg <= datab_1;      
     end
   end
 end
 
-wire [15:0] negated_a_0, negated_a_1;
-assign negated_a_0 = addnsub1 ? dataa_0_reg : -dataa_0_reg;
-assign negated_a_1 = addnsub1 ? dataa_1_reg : -dataa_1_reg;
+wire [15:0] negated_a_1;
+assign negated_a_1 = addnsub1 ? -dataa_1_reg : dataa_1_reg;
 
 macc_addsub_reg macc (
  .result(result),
- .dataa_0_reg(negated_a_0),
- .dataa_1_reg(negated_a_1),
- .datab_0_reg(datab_0_reg),
- .datab_1_reg(datab_1_reg),
+ .a0(dataa_0_reg),
+ .a1(negated_a_1),
+ .b0(datab_0_reg),
+ .b1(datab_1_reg),
  .addnsub1(addnsub1),
  .clock2(clock2), .aclr1(aclr1), .ena2(ena2)
 );
@@ -412,7 +422,7 @@ endmodule
 
 module macc_addsub_reg(
   output reg [32:0] result,
-  input signed [15:0] dataa_0_reg, dataa_1_reg, datab_0_reg, datab_1_reg,
+  input signed [15:0] a0, a1, b0, b1,
   input wire addnsub1, clock2, aclr1, ena2
 );
 
@@ -422,7 +432,7 @@ always @(posedge clock2, posedge aclr1) begin
     result <= 33'd0;
   end else begin
     if (ena2) begin
-      result <= dataa_0_reg*datab_0_reg + dataa_1_reg*datab_1_reg;
+      result <= a0*b0 + a1*b1;
     end
   end
 end

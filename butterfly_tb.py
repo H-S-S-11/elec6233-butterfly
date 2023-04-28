@@ -141,6 +141,10 @@ async def butterfly_test(dut):
   # Try with some larger numbers
   await butterfly_mult(dut, 0.75, -0.25, 100, -80, 75, 120)
 
+  # Feedback reg causes negative results to be rounded to the nearest integer (rather than floored)
+  await load_coefficients(dut, 0.031250, 0.718750)
+  await butterfly_mult(dut, 0.031250, 0.718750, -96, -103, 31, 18)
+
   # These cases (generated from constrained random stimuli) made it fail, but don't when running on their own??
   # This problem appears to have been fixed by making sure all control signals are cleared -looks like some got left over from previous calculation
   # Caculating: (-27+53i) + (0.289062+-0.179688i)*(36+-99i), (-27+53i) - (0.289062+-0.179688i)*(36+-99i)
@@ -150,13 +154,9 @@ async def butterfly_test(dut):
 
   await load_coefficients(dut, -0.6171875, -0.2890625)
   await butterfly_mult(dut,  -0.6171875, -0.2890625, -85, 92, 9, 10)
-
   
   # These hit corner case in terms of rounding of results
   # Feedback reg causes negative results to be rounded to the nearest integer (rather than floored)
-  await load_coefficients(dut, 0.031250, 0.718750)
-  await butterfly_mult(dut, 0.031250, 0.718750, -96, -103, 31, 18)
-
   await load_coefficients(dut, -0.3671875, 0.1328125)
   await butterfly_mult(dut, -0.3671875, 0.1328125, -47, -70, -96, 1)
 
