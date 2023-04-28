@@ -332,6 +332,7 @@ end
 // https://community.intel.com/t5/Intel-Quartus-Prime-Software/Specific-to-Logic-lock-chip-planner/td-p/710447
 
 // Result = dataa_0*datab_0 +/- dataa_1*datab_1
+/*
 mult_add multiplier(
   .result(result),          //  result.result
   .dataa_0({ {8{re_w_pipeline[7] }}, re_w_pipeline}),  // Re(w) reg -sign extended to 16 bits (chipverify.com)
@@ -345,7 +346,62 @@ mult_add multiplier(
   .sclr0(reset),        // Sync active high reset
   .clock0(clk), .clock1(clk), .clock2(clk) // common clk
 );
+*/
 
+mult_add_inferred multiplier(
+  .result(result),          //  result.result
+  .dataa_0({ {8{re_w_pipeline[7] }}, re_w_pipeline}),  // Re(w) reg -sign extended to 16 bits (chipverify.com)
+  .dataa_1({ {8{data_in[7]       }}, data_in      }),  // Im(w) reg
+  .datab_0({ b_pipeline_0          , 8'd0         }),  // mult0 -left shifted for fixed point
+  .datab_1({ b_pipeline_1          , 8'd0         }),  // mult1
+  .addnsub1(subtract),  // addnsub1, use_subnadd=1
+  .ena0(load_coeff),    // load w
+  .ena1(load_mult),     // load mult 0, 1
+  .ena2(multiply) ,     // output reg enable
+  .aclr0(reset), .aclr1(reset), .aclr2(reset),  // Async active high reset
+  .clock0(clk), .clock1(clk), .clock2(clk)      // common clk
+);
+
+endmodule
+
+module mult_add_inferred(
+  output reg [32:0] result,
+  input wire [15:0] dataa_0, dataa_1, datab_0, datab_1,
+  input wire clock0, clock1, clock2,
+  input wire ena0, ena1, ena2,
+  input wire aclr0, aclr1, aclr2, addnsub1
+);
+
+// Input registers
+reg [15:0] dataa_0_reg, dataa_1_reg, datab_0_reg, datab_1_reg;
+always @(posedge clock0, posedge aclr0) begin
+  if (aclr2) begin
+    dataa_0_reg <= 16'd0;
+    dataa_1_reg <= 16'd0;
+    datab_0_reg <= 16'd0;
+    datab_1_reg <= 16'd0;
+  end else begin
+    if (ena0) begin
+      dataa_0_reg <= dataa_0;
+      dataa_1_reg <= dataa_1;
+      datab_0_reg <= datab_0;
+      datab_1_reg <= datab_1;      
+    end
+  end
+end
+
+// Multipliers and output reg
+always @(posedge clock2, posedge aclr2) begin
+  if (aclr2) begin 
+    result <= 33'd0;
+  end else begin
+    if (ena2) begin
+      if (addnsub1) result <=  dataa_0_reg*datab_0_reg + dataa_1_reg*datab_1_reg;
+      else result <=  dataa_0_reg*datab_0_reg - dataa_1_reg*datab_1_reg;
+    end
+  end
+end
+  
 endmodule
 
 `default_nettype wire
