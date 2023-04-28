@@ -51,7 +51,7 @@ set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS R
 set_global_assignment -name TOP_LEVEL_ENTITY butterfly
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 20.1.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "12:47:13  MARCH 15, 2023"
-set_global_assignment -name LAST_QUARTUS_VERSION "20.1.0 Lite Edition"
+set_global_assignment -name LAST_QUARTUS_VERSION "16.1.2 Standard Edition"
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
@@ -929,4 +929,19 @@ set_global_assignment -name MAX_BALANCING_DSP_BLOCKS 1
 # set_global_assignment -name QII_AUTO_PACKED_REGISTERS OFF
 # set_instance_assignment -name MAX_BALANCING_DSP_BLOCKS 1 -to "butterfly_datapath:datapath"
 # set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_global_assignment -name ALLOW_REGISTER_MERGING OFF
+set_global_assignment -name QII_AUTO_PACKED_REGISTERS OFF
+set_global_assignment -name LL_ENABLED ON -section_id DSP_1
+set_global_assignment -name LL_AUTO_SIZE OFF -section_id DSP_1
+set_global_assignment -name LL_STATE LOCKED -section_id DSP_1
+set_global_assignment -name LL_RESERVED OFF -section_id DSP_1
+set_global_assignment -name LL_CORE_ONLY OFF -section_id DSP_1
+set_global_assignment -name LL_SECURITY_ROUTING_INTERFACE OFF -section_id DSP_1
+set_global_assignment -name LL_IGNORE_IO_BANK_SECURITY_CONSTRAINT OFF -section_id DSP_1
+set_global_assignment -name LL_PR_REGION OFF -section_id DSP_1
+set_global_assignment -name LL_ROUTING_REGION_EXPANSION_SIZE 2147483647 -section_id DSP_1
+set_global_assignment -name LL_WIDTH 1 -section_id DSP_1
+set_global_assignment -name LL_HEIGHT 1 -section_id DSP_1
+set_global_assignment -name LL_ORIGIN X54_Y4 -section_id DSP_1
+set_instance_assignment -name LL_MEMBER_OF DSP_1 -to "butterfly_datapath:datapath|mult_add:multiplier|mult_add_0002:mult_add_inst|altera_mult_add:altera_mult_add_component|altera_mult_add_rtl:multiply_adder|ama_multiplier_function:multiplier_block" -section_id DSP_1
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
