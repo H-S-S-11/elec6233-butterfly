@@ -8,4 +8,6 @@ sim_build/
 *.vcd
 *log.txt
 results.xml
+c5_pin_model_dump.txt
+*.qdf
 __pycache__/

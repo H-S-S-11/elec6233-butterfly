@@ -50,6 +50,7 @@ async def load_coefficients(dut, re_w, im_w):
   if (abs(re_w) > 1) or (abs(im_w) > 1):
     raise ValueError("Coeffiecient must be between -1 and (1- 2^(-8))")
   dut.SW_ReadyIn.value = 0
+  await Timer(50, units="ms")
   await reset(dut, 50)  
   await Timer(20, units="ms")
   # Convert to fixed point

@@ -61,7 +61,7 @@ butterfly_datapath datapath(
   .data_out(LEDR[7:0])                // Leftmost LEDS are MSB
 );
 
-butterfly_controller control_dut(
+butterfly_controller control(
   .clk(CLOCK_50), .reset(reset),
   .ReadyIn        (ready_in),
   .load_coeff     (load_coeff),     
@@ -294,7 +294,7 @@ reg  [8:0]  re_mult_out;
 assign mult_out = result[22:14];
 always @(posedge clk) begin
   if (reset) begin
-    re_mult_out <= 8'd0;
+    re_mult_out <= '0;
   end else begin
     if (multiply) begin
       re_mult_out <= mult_out;
@@ -302,9 +302,13 @@ always @(posedge clk) begin
   end
 end
 
+`ifndef ALTERNATE_OUTPUTS
 // fbr and output reg
-assign data_out = led[8:1];
+// 51 logic regs, 25 ALUTs (map)
+// butterfly                       ; 68.0 (12.8)  ; 74.5 (13.5)
+// butterfly_datapath:datapath     ; 32.0 (24.0)  ; 37.7 (29.7)
 reg  [8:0] led, feedback;
+assign data_out = led[8:1];
 wire [8:0] fbr_sub_in, led_add_in;
 assign fbr_sub_in = mult_out_select ? re_mult_out : mult_out;
 assign led_add_in = mult_out_select ? mult_out : re_mult_out;
@@ -323,6 +327,46 @@ always @(posedge clk) begin
     end
   end
 end
+`endif
+
+`ifdef ALTERNATE_OUTPUTS
+// 56 logic regs, 23 ALUTs (map)
+// Fitter:
+// butterfly                    ; 61.5 (12.7) ; 75.5 (13.2)
+// butterfly_datapath:datapath  ; 27.5 (19.5) ; 36.8 (28.8)
+reg [7:0] led, re_a, im_a;
+assign data_out = led;
+always @(posedge clk) begin
+  if (reset) begin
+    re_a <= '0;
+    im_a <= '0;
+  end else if (fbr_input) begin
+    if (load_mult) begin
+      re_a <= data_in;
+    end else begin
+      im_a <= data_in;
+    end    
+  end  
+end
+
+wire [7:0] led_add_in [1:0];
+assign led_add_in[0] = mult_out_select ? mult_out[8:1] : re_mult_out[8:1];
+assign led_add_in[1] = mult_out_select ? im_a : re_a;
+always @(posedge clk) begin
+  if (reset) begin
+    led <= '0;
+  end else begin
+    if (load_output_reg) begin
+      if (subtract) begin
+        led <= led_add_in[1] - led_add_in[0];
+      end else begin
+        led <= led_add_in[1] + led_add_in[0];
+      end
+    end
+  end
+end
+
+`endif
 
 
 // Logiclock needed for this to implement in one region properly
