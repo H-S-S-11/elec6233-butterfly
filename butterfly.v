@@ -319,10 +319,12 @@ always @(posedge clk) begin
   end else begin
     if (load_output_reg) begin
       feedback  <= fbr_input ? {data_in, 1'b0} : led - fbr_sub_in;
-      if (subtract) begin
-        led <= feedback - led_add_in;
-      end else begin
-        led <= feedback + led_add_in;
+      if (!multiply) begin
+        if (subtract) begin
+          led <= feedback - led_add_in;
+        end else begin
+          led <= feedback + led_add_in;
+        end
       end
     end
   end
