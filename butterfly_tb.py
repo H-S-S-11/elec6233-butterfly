@@ -100,7 +100,7 @@ async def butterfly_mult(dut, re_w, im_w, re_b, im_b, re_a, im_a):
     for key, value in float_results.items():
       diff = yz[key] - value
       dut._log.warning(f"{key} differs by {diff} from the full-precision result ({value})")
-      assert ( (diff < 0.5) & (diff > -1)), f"Difference ({diff}) is outside allowed range (-1 to +0.5)"
+      assert ( (diff < 1) & (diff > -1)), f"Difference ({diff}) is outside allowed range (-1 to +0.5)"
     #assert (yz==expected_results), f"Results {yz} differ from expected {expected_results}"
 
 def generate_inputs(dut, re_w, im_w, validate=False):

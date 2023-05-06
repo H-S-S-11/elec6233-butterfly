@@ -304,9 +304,9 @@ end
 
 `ifndef ALTERNATE_OUTPUTS
 // fbr and output reg
-// 51 logic regs, 25 ALUTs (map)
-// butterfly                       ; 68.0 (12.8)  ; 74.5 (13.5)
-// butterfly_datapath:datapath     ; 32.0 (24.0)  ; 37.7 (29.7)
+// 51 logic regs, 26 ALUTs (map)
+// butterfly                       ; 68.0 (12.8)  ; 75.0 (13.5)
+// butterfly_datapath:datapath     ; 31.7 (23.7)  ; 38.0 (30.0)
 reg  [8:0] led, feedback;
 assign data_out = led[8:1];
 wire [8:0] fbr_sub_in, led_add_in;
@@ -334,8 +334,8 @@ end
 `ifdef ALTERNATE_OUTPUTS
 // 56 logic regs, 23 ALUTs (map)
 // Fitter:
-// butterfly                    ; 61.5 (12.7) ; 75.5 (13.2)
-// butterfly_datapath:datapath  ; 27.5 (19.5) ; 36.8 (28.8)
+// butterfly                    ; 61.5 (12.7) ; 70.5 (13.2)
+// butterfly_datapath:datapath  ; 26.0 (18.0) ; 34.2 (26.2)
 reg [7:0] led, re_a, im_a;
 assign data_out = led;
 always @(posedge clk) begin
@@ -351,18 +351,18 @@ always @(posedge clk) begin
   end  
 end
 
-wire [7:0] led_add_in [1:0];
-assign led_add_in[0] = mult_out_select ? mult_out[8:1] : re_mult_out[8:1];
-assign led_add_in[1] = mult_out_select ? im_a : re_a;
+wire [7:0] led_add_in_1, led_add_in_0;
+assign led_add_in_0 = mult_out_select ? mult_out[8:1] : re_mult_out[8:1];
+assign led_add_in_1 = mult_out_select ? im_a : re_a;
 always @(posedge clk) begin
   if (reset) begin
     led <= '0;
   end else begin
-    if (load_output_reg) begin
+    if (load_output_reg & !multiply) begin
       if (subtract) begin
-        led <= led_add_in[1] - led_add_in[0];
+        led <= led_add_in_1 - led_add_in_0;
       end else begin
-        led <= led_add_in[1] + led_add_in[0];
+        led <= led_add_in_1 + led_add_in_0;
       end
     end
   end
