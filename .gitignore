@@ -11,3 +11,4 @@ results.xml
 c5_pin_model_dump.txt
 *.qdf
 __pycache__/
+*.zip
