@@ -188,7 +188,7 @@ async def butterfly_test(dut):
   n_coefficients = int( os.getenv("N_COEFFICIENT_PAIRS", 1))
   n_butterflies  = int( os.getenv("N_BUTTERFLIES", 1))
   # Can also choose in the Makefile whether to only allow calculations that won't overflow (default 0)
-  validate_inputs= bool(int(os.getenv("N_BUTTERFLIES", 0)))
+  validate_inputs= bool(int(os.getenv("VALID_INPUTS_ONLY", 0)))
 
   for n_coeff in range(0, n_coefficients):
     # Generate a random pair of coefficients and load into the DUT
